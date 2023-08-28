@@ -8,8 +8,8 @@ import {
 } from '../controllers/postController';
 import {
   createComment,
+  getAllPostComments,
   deleteComment,
-  getAllComments,
 } from '../controllers/commentController';
 import { protect } from '../middleware/authMiddleware';
 
@@ -23,8 +23,8 @@ router
   .put(protect, updatePostPublishedStatus)
   .delete(protect, deletePost);
 
-// router.route('/:postId/comments').get(getAllComments).post(createComment);
+router.route('/:postId/comments').get(getAllPostComments).post(createComment);
 
-// router.delete('/:postId/comments/:commentId', protect, deleteComment);
+router.delete('/:postId/comments/:commentId', protect, deleteComment);
 
 export default router;
