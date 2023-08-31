@@ -1,14 +1,30 @@
 import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { body, validationResult } from 'express-validator';
+import jwt from 'jsonwebtoken';
+import User from '../models/user';
 import Post from '../models/post';
 
-const getAllPosts = asyncHandler(async (req: Request, res: Response) => {
-  const allPosts = await Post.find().populate('user', 'username');
+const getAllPosts = asyncHandler(async (req: any, res: Response) => {
+  const token = req.cookies.jwt;
+  let allPosts = await Post.find()
+    .populate('user', 'username')
+    .sort('-updatedAt');
+  let user;
 
-  const allPublishedPosts = allPosts.filter(post => post.published);
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId: string;
+    };
 
-  res.status(200).json(allPublishedPosts);
+    user = await User.findById(decoded.userId);
+  } catch (error) {
+    user = null
+  }
+
+  allPosts = user ? allPosts : allPosts.filter((post) => post.published);
+
+  res.status(200).json(allPosts);
 });
 
 const getSinglePost = asyncHandler(async (req: Request, res: Response) => {
