@@ -4,15 +4,17 @@ import { body, validationResult } from 'express-validator';
 import Post from '../models/post';
 
 const getAllPosts = asyncHandler(async (req: Request, res: Response) => {
-  const allPosts = await Post.find();
+  const allPosts = await Post.find().populate('user', 'username');
 
-  res.status(200).json(allPosts);
+  const allPublishedPosts = allPosts.filter(post => post.published);
+
+  res.status(200).json(allPublishedPosts);
 });
 
 const getSinglePost = asyncHandler(async (req: Request, res: Response) => {
   const { postId } = req.params;
 
-  const post = Post.findById(postId);
+  const post = await Post.findById(postId);
 
   if (!post) {
     res.status(404);
