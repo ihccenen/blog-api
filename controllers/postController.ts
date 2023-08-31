@@ -4,6 +4,7 @@ import { body, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
 import Post from '../models/post';
+import Comment from '../models/comment';
 
 const getAllPosts = asyncHandler(async (req: any, res: Response) => {
   const token = req.cookies.jwt;
@@ -19,7 +20,7 @@ const getAllPosts = asyncHandler(async (req: any, res: Response) => {
 
     user = await User.findById(decoded.userId);
   } catch (error) {
-    user = null
+    user = null;
   }
 
   allPosts = user ? allPosts : allPosts.filter((post) => post.published);
@@ -30,7 +31,7 @@ const getAllPosts = asyncHandler(async (req: any, res: Response) => {
 const getSinglePost = asyncHandler(async (req: Request, res: Response) => {
   const { postId } = req.params;
 
-  const post = await Post.findById(postId);
+  const post = await Post.findById(postId).populate('user', 'username');
 
   if (!post) {
     res.status(404);
@@ -54,7 +55,7 @@ const createPost = [
       throw new Error('Invalid post data');
     }
 
-    const { title, text, published } = req.body;
+    const { title, text, published = false } = req.body;
     const { _id } = req.user;
     const post = new Post({ title, text, published, user: _id });
 
@@ -97,6 +98,8 @@ const deletePost = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const result = await post.deleteOne();
+
+  await Comment.deleteMany({ post: postId });
 
   const message = `Post '${result.title}' with ID ${result._id} deleted`;
 
